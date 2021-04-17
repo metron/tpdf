@@ -1,0 +1,5 @@
+aiohttp~=3.7.4.post0
+aiohttp-jinja2~=1.4.2
+pdfrw~=0.4
+reportlab~=3.5.66
+Jinja2~=2.11.3

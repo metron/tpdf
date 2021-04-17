@@ -1,0 +1,125 @@
+<html lang="ru">
+<head>
+    <script src="/static/js/jquery.min.js"></script>
+    <script src="/static/js/jquery-ui.min.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $(function() {
+                $(".field_div").draggable().resizable({handles: "e, w"});
+                var page = (parseInt($("#page_num").text()) - 1).toString();
+                $("#page_" + page).show();
+            });
+
+            function change_page(delta) {
+                var old_page = parseInt($("#page_num").text())
+                var new_page = (old_page + delta).toString();
+                var query = window.location.search.substring(1);
+                var vars = query.split('&');
+                // ищем в адресной строке параметр номера страницы для изменения
+                var page_num_exist = false;
+                for (var i = 0; i < vars.length; i++) {
+                    var pair = vars[i].split('=');
+                    if (pair[0] == 'page_num') {
+                        vars[i] = pair[0] + '=' + new_page;
+                        page_num_exist = true;
+                    }
+                }
+                // если в адресной строке параметр номера страницы не найден
+                if (!page_num_exist){
+                    vars[i] = 'page_num=' + new_page;
+                }
+                var new_search = "?" + vars.join("&");
+                window.location.search = new_search;
+            }
+
+            $("#next_page").on("click", function (e) {
+                change_page(1);
+            })
+
+            $("#prev_page").on("click", function (e) {
+                change_page(-1);
+            })
+
+            $("#save_pos").on("click", function (e) {
+                var page_num = (parseInt($("#page_num").text()) - 1).toString();
+                var page = "page_" + page_num;
+                var pos = {}
+                pos[page_num] = []
+                $("#"+page+" .field_div").each(function (i, el) {
+                    var x = parseFloat($(el).css("left"));
+                    var y = parseFloat($(el).css("top"));
+                    var name = $(el).text().trim();
+                    var font_name = $(el).css("font-family").split(",")[0];
+                    var font_size = parseInt($(el).css("font-size"));
+                    var w = parseFloat($(el).css("width"));
+                    pos[page_num].push([x, y, name, font_name, font_size, w])
+                    pos["file_name"] = "{{ pdf_name }}";
+                })
+                $.ajax({
+                    type: "POST",
+                    url: "/tpdf/save_form_fields",
+                    {#data: {"pos": JSON.stringify(pos)},#}
+                    contentType: "application/json; charset=utf-8",
+                    data: JSON.stringify({"pos": pos}),
+                    dataType: "json"
+                }).always(function (data, status) {
+                    console.log(data);
+                    console.log(status);
+                    location.reload();
+                })
+            })
+        })
+    </script>
+    <link rel="stylesheet" href="/static/css/jquery-ui.min.css">
+    <style>
+        @font-face {
+            font-family: DejaVuSans;
+            src: url(/static/fonts/DejaVuSans.ttf);
+         }
+
+        .field_div {
+            overflow: hidden;
+            position: absolute;
+            z-index: 15;
+            background-color: Green;
+            opacity: 0.5;
+            font-family: DejaVuSans, "Courier", sans-serif;
+            color: red;
+            border-radius: 4px;
+        }
+    </style>
+    <title>pdf fields</title>
+</head>
+<body>
+{% for page_i in fields.keys() %}
+    <div id="page_{{ page_i }}" style="display: none;">
+        {% for field in fields[page_i] %}
+            <div class="field_div ui-widget-content"
+                 style="
+                     left: {{ field.x }}px;
+                     top: {{ field.y }}px;
+                     width: {{ field.width }}px;
+                     font-size: {{ field.font_size }}px;
+                     ">
+                {{ field.name }}
+            </div>
+        {% endfor %}
+    </div>
+{% endfor %}
+<span style="position:absolute;left:10px; top:300px;">
+    <button id="prev_page">Пред</button>
+    <label id="page_num" style="margin-right: 10px; margin-left: 10px;">{{ page_num }}</label>
+    <button id="next_page">След</button>
+</span>
+<span style="position:absolute;left:10px; top:330px;">
+    <button id="save_pos">Сохранить позиции</button>
+</span>
+
+<div id="ipdf" style="position:absolute;left:200px;">
+    <iframe src="/tpdf/get_file?pdf_name={{ pdf_name }}#toolbar=0&statusbar=0&navpanes=0&scrollbar=1&zoom=100&page={{ page_num }}"
+            height="1132" width="808" frameborder="0"></iframe>
+</div>
+<div style="position:absolute;left:200px;z-index: 11;opacity: 0.01;height: 1132px;width: 808px;background-color: green;"></div>
+
+</body>
+</html>

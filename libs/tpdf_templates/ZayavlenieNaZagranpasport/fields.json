@@ -1,0 +1,12 @@
+{
+    "0": [
+        [32.25, 710.25, "fio", "DejaVuSans", 12, 420],
+        [466.5, 682.26, "foto.jpg", "DejaVuSans", 12, 89],
+        [425.25, 681.75, "gender", "DejaVuSans", 12, 18],
+        [206.25, 681.75, "birth_date", "DejaVuSans", 12, 173]
+    ],
+    "1": [
+        [131.25, 720.76, "1_work", "DejaVuSans", 10, 260],
+        [132.0, 697.51, "2_work", "DejaVuSans", 10, 260]
+    ]
+}

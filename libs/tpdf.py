@@ -166,7 +166,7 @@ class TPdf:
                     text = val if val else ''
                     # выводим данные (текст) в нужную позицию
                     y_margin = 0
-                    for txt in self.word_wrap(text, field.width, can):
+                    for txt in self.text_wrap(text, field.width, can):
                         # есть не вместившийся текст, печатаем его на след строке
                         can.drawString(field.x, field.y - y_margin, txt)
                         y_margin += field.font_size * 1.2
@@ -268,42 +268,6 @@ class TPdf:
 
         # возвращаем оставшийся кусочек текста
         yield text[text_start:]
-
-    @staticmethod
-    def word_wrap(text: str, width: int, canvas: 'canvas.Canvas') -> \
-            Generator[str, None, None]:
-        """Делит text на части, если текст не помещается в width
-
-        Args:
-            text: текст
-            width: ширина поля
-            canvas: canvas
-
-        Возвращает подстроки максимальной длины, не превышающей заданную ширину
-            width, разбиение на подстроки по пробелам
-        """
-        while True:
-            tail = ''
-            tail_words = []
-            while canvas.stringWidth(text) > width:
-                words = text.split()
-                if len(words) > 1:
-                    # перенос по словам
-                    text = ' '.join(words[:-1])
-                    tail_words = words[-1:] + tail_words
-                else:
-                    # перенос по буквам
-                    tail = text[-1:] + tail
-                    text = text[:-1]
-                    # если даже одна буква не помещается
-                    if not text:
-                        text = ' '.join([tail[1:], ] + tail_words).strip()
-                        yield tail[:1]
-            yield text
-            # выходим, если хвост пустой
-            text = ' '.join([tail, ] + tail_words).strip()
-            if not text:
-                break
 
     @staticmethod
     def format_for_pdf(data):

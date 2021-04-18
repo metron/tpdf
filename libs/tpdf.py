@@ -225,6 +225,51 @@ class TPdf:
         return self.get_res(pdf_writer, b64)
 
     @staticmethod
+    def text_wrap(text: str, width: int, canvas: 'canvas.Canvas') -> \
+            Generator[str, None, None]:
+        """Делит text на части, если текст не помещается в width
+
+        Args:
+            text: текст
+            width: ширина поля
+            canvas: canvas
+
+        Возвращает подстроки максимальной длины, не превышающей заданную ширину
+            width, разбиение на подстроки по пробелам
+        """
+        last_space = 0
+        text_start = 0
+        word_len = 0
+        cur_text_len = 0
+        for i in range(len(text)):
+            # длина очередного символа нужна заранее
+            symbol_len = canvas.stringWidth(text[i])
+            # запоминаем позицию пробела или вычисляем длину очередного слова
+            if text[i] == ' ':
+                last_space = i
+                word_len = 0
+            else:
+                word_len += symbol_len
+
+            # если длина части текста превысила допустимое значение, то возвращаем текст
+            cur_text_len += symbol_len
+            if cur_text_len > width:
+                cur_text_len = word_len
+                # если слово поместилось, то перенос по пробелу
+                if text_start < last_space:
+                    yield text[text_start:last_space]
+                    text_start = last_space + 1
+                # иначе переносим по буквам
+                else:
+                    yield text[text_start:i]
+                    text_start = i
+                    word_len = symbol_len
+                    cur_text_len = symbol_len
+
+        # возвращаем оставшийся кусочек текста
+        yield text[text_start:]
+
+    @staticmethod
     def word_wrap(text: str, width: int, canvas: 'canvas.Canvas') -> \
             Generator[str, None, None]:
         """Делит text на части, если текст не помещается в width

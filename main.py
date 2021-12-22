@@ -20,6 +20,7 @@ app.add_routes([
     web.post('/tpdf/save_form_fields', tpdf.save_form_fields),
     web.get('/tpdf/get_file', tpdf.get_file),
     web.get('/tpdf/example', tpdf.example),
+    web.static('/static', 'static', show_index=True)
 ])
 
 web.run_app(app, port=8001)

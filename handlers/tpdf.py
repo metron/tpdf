@@ -1,8 +1,11 @@
-import aiohttp_jinja2
-
+import os
+from glob import glob
 from urllib.parse import quote
-from libs.tpdf import TPdf
+
+import aiohttp_jinja2
 from aiohttp import web
+
+from libs.tpdf import TPdf
 
 
 class ResponseFile(web.Response):
@@ -25,7 +28,8 @@ async def positioning(request):
     }
     in_data.update(dict(request.query))
     fields = tpdf.load_fields_from_file(name=in_data['pdf_name'], to_front=True)
-    in_data.update({'fields': fields})
+    fonts = [os.path.basename(filename)[:-4] for filename in glob(os.path.join(tpdf.FONTS, '*.ttf'))]
+    in_data.update({'fields': fields, 'fonts': fonts})
     return in_data
 
 

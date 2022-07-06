@@ -72,10 +72,12 @@
     </script>
     <link rel="stylesheet" href="/static/css/jquery-ui.min.css">
     <style>
-        @font-face {
-            font-family: DejaVuSans;
-            src: url(/static/fonts/DejaVuSans.ttf);
-         }
+        {% for font in fonts %}
+            @font-face {
+                font-family: {{ font }};
+                src: url("/static/fonts/{{ font }}.ttf");
+             }
+        {% endfor %}
 
         .field_div {
             overflow: hidden;
@@ -83,7 +85,6 @@
             z-index: 15;
             background-color: Green;
             opacity: 0.5;
-            font-family: DejaVuSans, "Courier", sans-serif;
             color: red;
             border-radius: 4px;
         }
@@ -100,7 +101,8 @@
                      top: {{ field.y }}px;
                      width: {{ field.width }}px;
                      font-size: {{ field.font_size }}px;
-                     ">
+                     font-family: {{ field.font_name }};
+                ">
                 {{ field.name }}
             </div>
         {% endfor %}

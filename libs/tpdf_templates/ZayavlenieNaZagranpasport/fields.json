@@ -1,15 +1,15 @@
 {
     "0": [
-        [32.25, 710.25, "fio", "DejaVuSans", 12, 420],
+        [32.25, 710.25, "fio", "Arial", 12, 420],
         [425.25, 681.75, "gender", "DejaVuSans", 12, 18],
         [206.25, 681.75, "birth_date", "DejaVuSans", 12, 173],
         [462.75, 681.53, "foto.jpg", "DejaVuSans", 12, 92],
-        [146.25, 665.25, "birth_place", "DejaVuSans", 12, 418],
+        [146.25, 665.25, "birth_place", "Times New Roman", 12, 418],
         [228.0, 634.5, "registration", "DejaVuSans", 12, 340]
     ],
     "1": [
         [132.0, 720.76, "1_work", "DejaVuSans", 10, 260],
-        [132.0, 697.51, "2_work", "DejaVuSans", 10, 260],
-        [132.0, 673.51, "3_work", "DejaVuSans", 10, 141]
+        [132.0, 697.51, "2_work", "Arial", 10, 260],
+        [132.0, 673.51, "3_work", "Times New Roman", 10, 141]
     ]
 }

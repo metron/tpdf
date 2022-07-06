@@ -4,10 +4,11 @@ import json
 import os
 from collections import namedtuple
 from datetime import datetime as dt
+from functools import cached_property
+from glob import glob
 from typing import Generator
 
-from functools import cached_property
-from pdfrw import PdfFileReader, PdfFileWriter, PageMerge
+from pdfrw import PageMerge, PdfFileReader, PdfFileWriter
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.utils import ImageReader
 from reportlab.pdfbase import pdfmetrics
@@ -32,6 +33,7 @@ class TPdf:
         self.fields.update(kwargs)
         self.fields = self.format_for_pdf(self.fields)
         self.documents = {}
+        self.FONTS = os.path.abspath(os.path.join(CUR_PATH, '../static/fonts'))
 
     @staticmethod
     def load_fields_from_file(name='', to_front=False):
@@ -118,8 +120,9 @@ class TPdf:
         # подгружаем из файла параметры полей (координаты, размер шрифта и др.)
         pdf_fields = self.load_fields_from_file(name)
 
-        # регистрируем все необходимые шрифты
-        pdfmetrics.registerFont(TTFont('DejaVuSans', 'DejaVuSans.ttf'))
+        # регистрируем все шрифты, имеющиеся в папке со шрифтами
+        for filename in glob(os.path.join(self.FONTS, '*.ttf')):
+            pdfmetrics.registerFont(TTFont(os.path.basename(filename)[:-4], filename))
         last_font = ['DejaVuSans', 10]
 
         pdf_form_path = os.path.join(FILES, name, 'form.pdf')

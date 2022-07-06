@@ -37,7 +37,7 @@ class TPdf:
     def load_fields_from_file(name='', to_front=False):
         """
         :param name: имя документа ( = имена файлов pdf, json)
-        :param corr: нужно ли делать преобразование pdf координат в координаты
+        :param to_front: нужно ли делать преобразование pdf координат в координаты
             html веб формы в пиксели?
         :return: словарь с набором параметров полей постранично
         """
@@ -57,7 +57,7 @@ class TPdf:
     @staticmethod
     def save_fields_to_file(new_pos):
         """
-        :param pos: позиции полей + имя файла pdf, json
+        :param new_pos: позиции полей + имя файла pdf, json
         :return: успех или не успех
         """
         file_name = new_pos.pop('file_name')

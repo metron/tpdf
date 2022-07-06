@@ -20,7 +20,6 @@
 
 ### Приложение построено на
 
-* [nginx]
 * [python3.8]
 * [pdfrw](https://pypi.org/project/pdfrw/)
 * [jquery](https://jquery.com/)
@@ -43,36 +42,9 @@
   pip install -r requirements.txt
   ```
 
-### Настраиваем nginx
-
-Наверное инструкция по установке nginx не нужна, после установки nginx нужно настроить
-статические пути к проекту и перенаправление запросов на 8001 порт приложения.
-
-  ```nginx
-  server {
-      listen 80;
-      listen [::]:80;
-  
-      server_name 127.0.0.1;
-  
-      location / {
-          proxy_set_header Host $http_host;
-          proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-          proxy_redirect off;
-          proxy_buffering off;
-          proxy_pass http://127.0.0.1:8001;
-      }
-  
-      location /static/ {
-          root /home/user/source/tpdf/;
-      }
-  }
-  ```
-
-
 ## Использование
 
-Запускаем nginx и запускаем приложение:
+Запускаем приложение:
   ```bash
   python3 main.py    
   ```
@@ -81,13 +53,13 @@
 Открываем в браузере, для примера, позиционирование полей тестового бланка
 (ZayavlenieNaZagranpasport)
   ```angular2html
-  http://127.0.0.1/tpdf/positioning?pdf_name=ZayavlenieNaZagranpasport&page_num=1
+  http://127.0.0.1:8001/tpdf/positioning?pdf_name=ZayavlenieNaZagranpasport&page_num=1
   ```
 
 Настраиваем положение полей в браузере с помощью мышки и сохраняем позиции.
 Открываем получившийся комплект документов
   ```angular2html
-  http://127.0.0.1/tpdf/example
+  http://127.0.0.1:8001/tpdf/example
   ```
 
 ### Добавить новый документ

@@ -5,7 +5,7 @@ from urllib.parse import quote
 import aiohttp_jinja2
 from aiohttp import web
 
-from libs.tpdf import TPdf
+from app.tpdf import TPdf
 
 
 class ResponseFile(web.Response):
@@ -47,24 +47,6 @@ async def positioning(request):
 async def save_form_fields(request):
     rq = await request.json()
     return TPdf.save_fields_to_file(rq["pos"])
-
-
-mime = {
-    "jpg": "image/jpeg",
-    "jpeg": "image/jpeg",
-    "png": "image/png",
-    "bmp": "image/bmp",
-    "gif": "image/gif",
-    "pdf": "application/pdf",
-    "xls": "application/vnd.ms-excel",
-    "xlsx": "application/vnd.ms-excel",
-    "xlsm": "application/vnd.ms-excel",
-    "doc": "application/msword",
-    "docx": "application/msword",
-    "rtf": "application/rtf",
-    "ppt": "application/powerpoint",
-    "pptx": "application/powerpoint",
-}
 
 
 async def get_file(request):

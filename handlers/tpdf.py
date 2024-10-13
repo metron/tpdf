@@ -18,6 +18,17 @@ class ResponseFile(web.Response):
         return web.Response(body=file_body, headers=headers)
 
 
+@aiohttp_jinja2.template('index.html')
+async def index(request):
+    paths = set()
+    for r in request.app.router.routes()._routes:
+        info = r.get_info()
+        if "path" in info:
+            paths.add(info["path"])
+    paths = paths - {"/", "/tpdf/save_form_fields", "/tpdf/get_file"}
+    return {"pages": [p for p in paths]}
+
+
 @aiohttp_jinja2.template('positioning.html')
 async def positioning(request):
     tpdf = TPdf()

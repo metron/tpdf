@@ -16,11 +16,12 @@ aiohttp_jinja2.setup(
 logging.basicConfig(level=logging.DEBUG)
 
 app.add_routes([
+    web.get('/', tpdf.index),
+    web.static('/static', 'static', show_index=True),
     web.get('/tpdf/positioning', tpdf.positioning),
     web.post('/tpdf/save_form_fields', tpdf.save_form_fields),
     web.get('/tpdf/get_file', tpdf.get_file),
     web.get('/tpdf/example', tpdf.example),
-    web.static('/static', 'static', show_index=True)
 ])
 
 web.run_app(app, port=8001)

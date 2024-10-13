@@ -8,7 +8,7 @@ from reportlab.pdfgen import canvas
 from libs.tpdf import TPdf
 
 
-def word_wrap(text: str, width: int, canvas: 'canvas.Canvas') -> \
+def word_wrap(text: str, width: int, canvas: "canvas.Canvas") -> \
         Generator[str, None, None]:
     """Делит text на части, если текст не помещается в width
 
@@ -21,13 +21,13 @@ def word_wrap(text: str, width: int, canvas: 'canvas.Canvas') -> \
         width, разбиение на подстроки по пробелам
     """
     while True:
-        tail = ''
+        tail = ""
         tail_words = []
         while canvas.stringWidth(text) > width:
             words = text.split()
             if len(words) > 1:
                 # перенос по словам
-                text = ' '.join(words[:-1])
+                text = " ".join(words[:-1])
                 tail_words = words[-1:] + tail_words
             else:
                 # перенос по буквам
@@ -35,16 +35,16 @@ def word_wrap(text: str, width: int, canvas: 'canvas.Canvas') -> \
                 text = text[:-1]
                 # если даже одна буква не помещается
                 if not text:
-                    text = ' '.join([tail[1:], ] + tail_words).strip()
+                    text = " ".join([tail[1:], ] + tail_words).strip()
                     yield tail[:1]
         yield text
         # выходим, если хвост пустой
-        text = ' '.join([tail, ] + tail_words).strip()
+        text = " ".join([tail, ] + tail_words).strip()
         if not text:
             break
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     text = """Спустя два дня последний класс школы СП ШЦ-401 весело рассаживался под прозрачным куполом гигантского вагона Спиральной Дороги. Едва поезд набрал скорость, в центральном проходе появился Кими и объявил, что он готов читать реферат. Послышались энергичные протесты. Ученики доказывали, что не хватит внимания — слишком интересно смотреть по сторонам. Учитель примирил всех советом прослушать реферат в середине пути, когда поезд будет пересекать фруктовый пояс шириной около четырехсот километров, — это два часа хода. Когда потянулись бесконечные, геометрически правильные ряды деревьев на месте бывшей пустынной степи Декана, Кими установил в проходе маленький проектор и направил на стенку салона цветные лучи иллюстраций. Юноша говорил об открытии спирального устройства вселенной, после которого смогли разрешить задачу сверхдальних межзвездных перелетов. О биполярном строении мира математики знали еще в ЭРМ, но физики того времени запутали вопрос наивным представлением об антивеществе."""
     width = 100
     print(len(text))

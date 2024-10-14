@@ -49,7 +49,7 @@
                     var x = parseFloat($(el).css("left"));
                     var y = parseFloat($(el).css("top"));
                     var name = $(el).text().trim();
-                    var font_name = $(el).css("font-family").split(",")[0];
+                    var font_name = $(el).css("font-family").split(",")[0].replaceAll('"', "");
                     var font_size = parseInt($(el).css("font-size"));
                     var w = parseFloat($(el).css("width"));
                     pos[page_num].push([x, y, name, font_name, font_size, w])

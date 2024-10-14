@@ -5,7 +5,7 @@ from urllib.parse import quote
 import aiohttp_jinja2
 from aiohttp import web
 
-from app.tpdf import TPdf
+from app.tpdf import TPdf, FILES
 
 
 class ResponseFile(web.Response):
@@ -20,13 +20,8 @@ class ResponseFile(web.Response):
 
 @aiohttp_jinja2.template("index.html")
 async def index(request):
-    paths = set()
-    for r in request.app.router.routes()._routes:
-        info = r.get_info()
-        if "path" in info:
-            paths.add(info["path"])
-    paths = paths - {"/", "/tpdf/save_form_fields", "/tpdf/get_file"}
-    return {"pages": [p for p in paths]}
+    only_dirs = [f for f in os.listdir(FILES) if not os.path.isfile(os.path.join(FILES, f))]
+    return {"dirs": only_dirs}
 
 
 @aiohttp_jinja2.template("positioning.html")

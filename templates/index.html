@@ -5,8 +5,14 @@
     <title>Tpdf</title>
 </head>
 <body>
-    {% for page in pages %}
-        <a href={{ page }}>{{ page }}</a><br>
+    {% for dir in dirs %}
+        <div>
+            <span>
+                {{ dir }}
+                <a href="/tpdf/positioning?pdf_name={{ dir }}&page_num=1">Настройка полей</a>
+                <a href="/tpdf/get_file?pdf_name={{ dir }}">Просмотр</a>
+            </span>
+        </div>
     {% endfor %}
 </body>
 </html>

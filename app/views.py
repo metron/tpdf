@@ -1,11 +1,13 @@
 import os
+from collections import defaultdict
 from glob import glob
 from urllib.parse import quote
 
 import aiohttp_jinja2
+import openpyxl
 from aiohttp import web
 
-from app.tpdf import TPdf, FILES
+from app.tpdf import FILES, TPdf
 
 
 class ResponseFile(web.Response):
@@ -20,8 +22,29 @@ class ResponseFile(web.Response):
 
 @aiohttp_jinja2.template("index.html")
 async def index(request):
-    only_dirs = [f for f in os.listdir(FILES) if not os.path.isfile(os.path.join(FILES, f))]
-    return {"dirs": only_dirs}
+    data = {}
+    for f in os.listdir(FILES):
+        sub_dir = os.path.join(FILES, f)
+        if os.path.isfile(sub_dir):
+            continue
+        xlsx_path = os.path.join(sub_dir, "data.xlsx")
+        data[f] = {
+            "has_data_xlsx": os.path.isfile(xlsx_path),
+        }
+        # если нет файла настроек полей и есть файл с данными, то формируем файл настроек
+        if not os.path.isfile(os.path.join(sub_dir, "fields.json")) and data[f]["has_data_xlsx"]:
+            new_pos = defaultdict(list)
+            wb_obj = openpyxl.load_workbook(xlsx_path)
+            sheet_obj = wb_obj.active
+            y_by_page_num = dict()
+            for i in range(1, sheet_obj.max_column + 1):
+                page_num = str(int(sheet_obj.cell(row=1, column=i).value) - 1)
+                field_name = sheet_obj.cell(row=2, column=i).value
+                y_by_page_num.setdefault(page_num, 720)
+                new_pos[page_num].append([50, y_by_page_num[page_num], field_name, "Times New Roman", 10, 400])
+                y_by_page_num[page_num] -= 30
+            TPdf.save_fields_to_file(dict(new_pos, **{"dir_name": f}))
+    return {"data": data}
 
 
 @aiohttp_jinja2.template("positioning.html")
@@ -29,11 +52,11 @@ async def positioning(request):
     tpdf = TPdf()
     # дефолтные параметры
     in_data = {
-        "pdf_name": "ClearPage",
+        "dir_name": "ClearPage",
         "page_num": "1",
     }
     in_data.update(dict(request.query))
-    fields = tpdf.load_fields_from_file(name=in_data["pdf_name"], to_front=True)
+    fields = tpdf.load_fields_from_file(name=in_data["dir_name"], to_front=True)
     fonts = [os.path.basename(filename)[:-4] for filename in glob(os.path.join(tpdf.FONTS, "*.ttf"))]
     in_data.update({"fields": fields, "fonts": fonts})
     return in_data
@@ -45,10 +68,17 @@ async def save_form_fields(request):
 
 
 async def get_file(request):
-    pdf_name = request.query["pdf_name"]
+    dir_name = request.query["dir_name"]
     tpdf = TPdf()
-    file = tpdf.get_pdf(pdf_name, b64="False", fill_x=True)
-    return ResponseFile(pdf_name, file)
+    file = tpdf.get_pdf(dir_name, b64="False", fill_x=True)
+    return ResponseFile(dir_name, file)
+
+
+async def get_file_with_data(request):
+    dir_name = request.query["dir_name"]
+    tpdf = TPdf()
+    file = tpdf.get_pdf_with_data(dir_name, b64="False")
+    return ResponseFile(dir_name, file)
 
 
 async def example(request):
@@ -74,9 +104,9 @@ async def example(request):
     ]
 
     # загружаем данные в основной класс и получаем комплект документов в pdf
-    tpdf = TPdf(**data)
+    tpdf = TPdf()
     # можно сгенерировать один файл или комплект документов
     # file = tpdf.get_pdf("ZayavlenieNaZagranpasport ", b64="False")
-    file = tpdf.get_complete(complete, b64="False")
+    file = tpdf.get_complete(complete, data, b64="False")
 
     return ResponseFile("ZayavlenieNaZagranpasport.pdf", file)

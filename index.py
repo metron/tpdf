@@ -21,6 +21,7 @@ app.add_routes([
     web.get("/tpdf/positioning", views.positioning),
     web.post("/tpdf/save_form_fields", views.save_form_fields),
     web.get("/tpdf/get_file", views.get_file),
+    web.get("/tpdf/get_file_with_data", views.get_file_with_data),
     web.get("/tpdf/example", views.example),
 ])
 

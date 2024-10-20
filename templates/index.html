@@ -5,12 +5,15 @@
     <title>Tpdf</title>
 </head>
 <body>
-    {% for dir in dirs %}
+    {% for d in data %}
         <div>
             <span>
-                {{ dir }}
-                <a href="/tpdf/positioning?pdf_name={{ dir }}&page_num=1">Настройка полей</a>
-                <a href="/tpdf/get_file?pdf_name={{ dir }}">Просмотр</a>
+                {{ d }}
+                <a href="/tpdf/positioning?dir_name={{ d }}&page_num=1">Настройка полей</a>
+                <a href="/tpdf/get_file?dir_name={{ d }}">Просмотр полей</a>
+                {% if data[d].has_data_xlsx %}
+                    <a href="/tpdf/get_file_with_data?dir_name={{ d }}">Итоговый pdf</a>
+                {% endif %}
             </span>
         </div>
     {% endfor %}

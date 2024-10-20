@@ -8,6 +8,7 @@ from functools import cached_property
 from glob import glob
 from typing import Generator
 
+import openpyxl
 from pdfrw import PageMerge, PdfFileReader, PdfFileWriter
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.utils import ImageReader
@@ -28,10 +29,8 @@ corr = {"x": 205.0, "y": 11.0, "px_to_pt": 3/4, "pt_to_px": 4/3}
 
 class TPdf:
 
-    def __init__(self, **kwargs):
+    def __init__(self):
         self.fields = {}
-        self.fields.update(kwargs)
-        self.fields = self.format_for_pdf(self.fields)
         self.documents = {}
         self.FONTS = os.path.abspath(os.path.join(CUR_PATH, "../static/fonts"))
 
@@ -62,23 +61,26 @@ class TPdf:
         :param new_pos: позиции полей + имя файла pdf, json
         :return: успех или не успех
         """
-        file_name = new_pos.pop("file_name")
-        pdf_fields_path = os.path.join(FILES, file_name, "fields.json")
-        res_positions = json.load(open(pdf_fields_path, "r"))
-        for page in new_pos:
-            new_pos[page] = [
-                TPdf.convert_coord_from_front(FieldParams(*f))
-                for f in new_pos[page]
-            ]
-        res_positions.update(new_pos)
+        dir_name = new_pos.pop("dir_name")
+        pdf_fields_path = os.path.join(FILES, dir_name, "fields.json")
+        if os.path.isfile(pdf_fields_path):
+            res_positions = json.load(open(pdf_fields_path, "r"))
+            for page in new_pos:
+                new_pos[page] = [
+                    TPdf.convert_coord_from_front(FieldParams(*f))
+                    for f in new_pos[page]
+                ]
+            res_positions.update(new_pos)
+        else:
+            res_positions = new_pos
         # форматируем строку с данными, для красивого отображения в файле
         for page in res_positions:
             res_positions[page].sort(key=lambda field: field[1], reverse=True)
-            res_positions[page] = [json.dumps(f) for f in res_positions[page]]
+            res_positions[page] = [json.dumps(f, ensure_ascii=False) for f in res_positions[page]]
         # преобразовываем итоговый словарь с координатами в json-строку с
         # нужными переносами строк, убираем лишние кавычки и слэши и сохраняем
         # итоговую (параметры одного поля в одной строке) json-строку в файл
-        new_pos_str = json.dumps(res_positions, indent=4).\
+        new_pos_str = json.dumps(res_positions, indent=4, ensure_ascii=False).\
             replace("\"[", "[").replace("]\"", "]").replace("\\", "")
         with open(pdf_fields_path, "w") as outfile:
             outfile.write(new_pos_str)
@@ -116,19 +118,20 @@ class TPdf:
             width=round(field.width * scale),
         )
 
-    def add_document(self, name, fill_x=False):
+    def add_document(self, dir_name, data, fill_x=False):
         # подгружаем из файла параметры полей (координаты, размер шрифта и др.)
-        pdf_fields = self.load_fields_from_file(name)
+        pdf_fields = self.load_fields_from_file(dir_name)
+        data = self.format_for_pdf(data)
 
         # регистрируем все шрифты, имеющиеся в папке со шрифтами
         for filename in glob(os.path.join(self.FONTS, "*.ttf")):
             pdfmetrics.registerFont(TTFont(os.path.basename(filename)[:-4], filename))
         last_font = ["DejaVuSans", 10]
 
-        pdf_form_path = os.path.join(FILES, name, "form.pdf")
-        D_IMAGES = os.path.join(FILES, name, "images")
+        pdf_form_path = os.path.join(FILES, dir_name, "form.pdf")
+        D_IMAGES = os.path.join(FILES, dir_name, "images")
         pdf_form = PdfFileReader(open(pdf_form_path, "rb"))
-        self.documents[name] = []
+        self.documents.setdefault(dir_name, [])
         # накладываем значения полей на страницы формы
         for page_number in range(len(pdf_form.pages)):
             page = pdf_form.getPage(page_number)
@@ -148,21 +151,23 @@ class TPdf:
                     if last_font != new_font:
                         last_font = new_font
                         can.setFont(*last_font)
-                    # если это картинка, то рисуем её
-                    if field.name.find(".") > -1:
-                        img = ImageReader(os.path.join(D_IMAGES, field.name))
-                        can.drawImage(img, field.x, field.y,
-                                      width=field.width, mask="auto",
-                                      preserveAspectRatio=True,
-                                      anchor="se")
                     if fill_x:
                         # заполняем именем поля, если требуется для настройки
                         val = field.name
                         while can.stringWidth(val) > field.width and len(val):
                             val = val[:-1]
-                    elif field.name in self.fields:
-                        # если значение поля уже имеются, то берём его
-                        val = str(self.fields[field.name])
+                    elif field.name in data:
+                        # если значение поля имеются, то берём его
+                        val = str(data[field.name])
+                        # если это картинка, то рисуем её
+                        ext = val.split(".")[-1]
+                        if ext in ["jpg", "JPG", "png", 'PNG']:
+                            img = ImageReader(os.path.join(D_IMAGES, val))
+                            can.drawImage(img, field.x, field.y,
+                                          width=field.width, mask="auto",
+                                          preserveAspectRatio=True,
+                                          anchor="se")
+                            val = None
                     else:
                         # в крайнем случае, пытаемся вычислить поле из property
                         val = getattr(self, field.name, "")
@@ -178,7 +183,7 @@ class TPdf:
                 packet.seek(0)
                 PageMerge(page).add(PdfFileReader(packet).getPage(0)).render()
             # добавляем полученную страницу в свойство для отложенной сборки
-            self.documents[name].append(page)
+            self.documents[dir_name].append(page)
 
     @staticmethod
     def get_res(pdf_writer, b64="True"):
@@ -198,15 +203,34 @@ class TPdf:
         return res
 
     def get_pdf(self, name, b64="True", fill_x=False):
-        return self.get_complete([(name, 1), ], b64, fill_x)
+        return self.get_complete([(name, 1), ], {}, b64, fill_x)
 
-    def get_complete(self, complete, b64="True", fill_x=False):
+    def get_pdf_with_data(self, dir_name, b64="True", fill_x=False):
+        pdf_fields_path = os.path.join(FILES, dir_name, "fields.json")
+        pdf_fields = json.load(open(pdf_fields_path, "r"))
+        pdf_writer = PdfFileWriter()
+        wb_obj = openpyxl.load_workbook(os.path.join(FILES, dir_name, "data.xlsx"))
+        sheet_obj = wb_obj.active
+        field_name_by_index = [sheet_obj.cell(row=2, column=i).value for i in range(1, sheet_obj.max_column + 1)]
+        for i in range(3, sheet_obj.max_row + 1):
+            data = {
+                field_name_by_index[j-1]: sheet_obj.cell(row=i, column=j).value for j in range(1, sheet_obj.max_column + 1)
+            }
+            self.add_document(dir_name, data, fill_x)
+        # перебираем страницы документа и добавляем их в итоговый pdf
+        for page in self.documents[dir_name]:
+            pdf_writer.addPage(page)
+        self.documents = []
+        return self.get_res(pdf_writer, b64)
+
+    def get_complete(self, complete, data, b64="True", fill_x=False):
         """ Собираем несколько pdf файлов в один комплект документов
         :param complete: list of tuples список кортежей, каждый из кортежей
             содержит на первой позиции имя документа, на второй позиции
             количество копий документа (не страниц, а копий) которое
             необходимо напечатать. Список упорядочен в последовательности, в
             которой нужно напечатать документы
+        :param data: словарь с данными
         :param fill_x: bool заполнять значения полей их именами
         :param b64: in ["True", "False", "Stream", ] - тип возвращаемых данных
             "True" - формат данных base64
@@ -219,7 +243,7 @@ class TPdf:
             count = doc[1]  # необходимое количество копий документа
             # если документ ещё не сформирован, то формируем его
             if name not in self.documents:
-                self.add_document(name, fill_x)
+                self.add_document(name, data, fill_x)
             # добавляем нужное количество копий документа с именем name
             for i in range(count):
                 # перебираем страницы документа и добавляем их в итоговый pdf

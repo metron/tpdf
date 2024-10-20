@@ -32,6 +32,10 @@
                 window.location.search = new_search;
             }
 
+            $("#index_page").on("click", function (e) {
+                window.location = "/";
+            })
+
             $("#next_page").on("click", function (e) {
                 change_page(1);
             })
@@ -53,7 +57,7 @@
                     var font_size = parseInt($(el).css("font-size"));
                     var w = parseFloat($(el).css("width"));
                     pos[page_num].push([x, y, name, font_name, font_size, w])
-                    pos["file_name"] = "{{ pdf_name }}";
+                    pos["dir_name"] = "{{ dir_name }}";
                 })
                 $.ajax({
                     type: "POST",
@@ -108,6 +112,10 @@
         {% endfor %}
     </div>
 {% endfor %}
+<span style="position:absolute;left:10px; top:270px;">
+    <button id="index_page">Главная</button>
+</span>
+
 <span style="position:absolute;left:10px; top:300px;">
     <button id="prev_page">Пред</button>
     <label id="page_num" style="margin-right: 10px; margin-left: 10px;">{{ page_num }}</label>
@@ -118,7 +126,7 @@
 </span>
 
 <div id="ipdf" style="position:absolute;left:200px;">
-    <iframe src="/tpdf/get_file?pdf_name={{ pdf_name }}#toolbar=0&statusbar=0&navpanes=0&scrollbar=1&zoom=100&page={{ page_num }}"
+    <iframe src="/tpdf/get_file?dir_name={{ dir_name }}#toolbar=0&statusbar=0&navpanes=0&scrollbar=1&zoom=100&page={{ page_num }}"
             height="1132" width="808" frameborder="0"></iframe>
 </div>
 <div style="position:absolute;left:200px;z-index: 11;opacity: 0.01;height: 1132px;width: 808px;background-color: green;"></div>
